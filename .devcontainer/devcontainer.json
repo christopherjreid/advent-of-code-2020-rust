@@ -1,0 +1,24 @@
+{
+	"name": "advent-of-code-2020-rust",
+	"build" : {
+		"args": {
+			"user": "${localEnv:USER}"
+		},
+		"dockerfile": "./Dockerfile"
+	},
+
+	"workspaceFolder": "${localWorkspaceFolder}",
+	"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+
+	"runArgs": [
+		"--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"
+	],
+
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash"
+	},
+
+	"extensions": [
+	    "rust-lang.rust"
+	]
+}
