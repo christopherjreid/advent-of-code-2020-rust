@@ -8,15 +8,16 @@ pub fn run() -> () {
     }
 
     let entries = convert_entries_to_i32(&puzzle_input.unwrap());
-    let result = repair_report(&entries, 2020);
 
-    if result.is_err() {
-        panic!("Could not repair report: No two entries summed to 2020");
+    for num_addends in 2..=3 {
+        let result = repair_report(&entries, 2020, num_addends);
+        print_result(num_addends, &result);
     }
-
-    println!("\tThe result of the input is {}", result.unwrap());
 }
 
+fn convert_entries_to_i32(entries: &str) -> Vec<i32> {
+    return entries.trim().lines().map(|s| s.parse::<i32>().unwrap()).collect();
+}
 
 fn load_input_from_file() -> std::io::Result<String> {
     let cargo_path = env!("CARGO_MANIFEST_DIR");
@@ -25,18 +26,34 @@ fn load_input_from_file() -> std::io::Result<String> {
     std::fs::read_to_string(&input_file_path)
 }
 
-fn convert_entries_to_i32(entries: &str) -> Vec<i32> {
-    return entries.trim().lines().map(|s| s.parse::<i32>().unwrap()).collect();
+fn print_result(num_addends: usize, result: &Result<i32, &str>) -> () {
+    if result.is_err() {
+        let panic_msg = format!("Could not repair report: No {} entries summed to 2020", num_addends);
+        panic!(panic_msg);
+    }
+
+    let success_msg = format!("\tThe result of the input for {} addends is {}", num_addends, result.unwrap());
+    println!("{}", success_msg);
 }
 
-fn repair_report(entries: &[i32], sum: i32) -> Result<i32, &str> {
+fn repair_report(entries: &[i32], sum: i32, num_to_sum: usize) -> Result<i32, &str> {
     for entry in entries {
         let complement = sum - entry;
-        if entries.contains(&complement) {
-            return Ok(entry * complement);
+        if num_to_sum == 3 {
+            match repair_report(entries, complement, 2) {
+                Ok(mult) => {
+                    return Ok(mult * entry);
+                },
+                Err(_) => { continue; }
+            }
+        }
+        else {
+            if entries.contains(&complement) {
+                return Ok(entry * complement);
+            }
         }
     }
-    Err("No two addends in input summed to 2020")
+    Err("No {} addends in input summed to {}")
 }
 
 #[cfg(test)]
@@ -54,7 +71,7 @@ mod tests {
         let input = [1721, 979, 366, 299, 675, 1456];
         let solution = 514579;
 
-        let proposed_solution = super::repair_report(&input, 2020).unwrap();
+        let proposed_solution = super::repair_report(&input, 2020, 2).unwrap();
 
         assert_eq!(proposed_solution, solution);
     }
