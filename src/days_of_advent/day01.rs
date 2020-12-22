@@ -1,3 +1,22 @@
+/// Run the Day 01 puzzle, loading the input from a file, finding entries
+/// that sum to a given value, and printing the result of multiplying those
+/// entries
+pub fn run() -> () {
+    let puzzle_input = load_input_from_file();
+    if puzzle_input.is_err() {
+        panic!("Could not load entries from file");
+    }
+
+    let entries = convert_entries_to_i32(&puzzle_input.unwrap());
+    let result = repair_report(&entries, 2020);
+
+    if result.is_err() {
+        panic!("Could not repair report: No two entries summed to 2020");
+    }
+
+    println!("\tThe result of the input is {}", result.unwrap());
+}
+
 
 fn load_input_from_file() -> std::io::Result<String> {
     let cargo_path = env!("CARGO_MANIFEST_DIR");
@@ -18,22 +37,6 @@ fn repair_report(entries: &[i32], sum: i32) -> Result<i32, &str> {
         }
     }
     Err("No two addends in input summed to 2020")
-}
-
-pub fn run() -> () {
-    let puzzle_input = load_input_from_file();
-    if puzzle_input.is_err() {
-        panic!("Could not load entries from file");
-    }
-
-    let entries = convert_entries_to_i32(&puzzle_input.unwrap());
-    let result = repair_report(&entries, 2020);
-
-    if result.is_err() {
-        panic!("Could not repair report: No two entries summed to 2020");
-    }
-
-    println!("\tThe result of the input is {}", result.unwrap());
 }
 
 #[cfg(test)]
