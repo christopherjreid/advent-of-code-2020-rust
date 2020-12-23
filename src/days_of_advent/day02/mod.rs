@@ -1,6 +1,8 @@
 pub mod parsers;
 pub mod policies;
 
+use crate::days_of_advent::common::io;
+
 use crate::days_of_advent::day02::parsers::regex_range_password_policy_parser::RegexRangePasswordPolicyParser;
 use crate::days_of_advent::day02::parsers::regex_index_password_policy_parser::RegexIndexPasswordPolicyParser;
 use crate::days_of_advent::day02::parsers::range_password_policy_parser::RangePasswordPolicyParser;
@@ -10,7 +12,7 @@ use crate::days_of_advent::day02::policies::index_password_policy::IndexPassword
 use crate::days_of_advent::day02::policies::validates_password::ValidatesPassword;
 
 pub fn run() -> () {
-    let puzzle_input = load_input_from_file();
+    let puzzle_input = io::load_input_from_file("day02");
     if puzzle_input.is_err() {
         panic!("Could not load entries from file");
     }
@@ -30,14 +32,16 @@ pub fn run() -> () {
 
     let num_valid_range_passwords = count_valid_passwords(&range_policies).unwrap();
     let num_valid_index_passwords = count_valid_passwords(&index_policies).unwrap();
-    println!(
-        "\tThe given password file has {} passwords that match the policy",
-        num_valid_range_passwords
-    );
-    println!(
-        "\tThe given password file has {} passwords that match the policy",
-        num_valid_index_passwords
-    );
+
+    let results = String::from(format!(
+        "The given password file has {} passwords that match the range policy\n\
+         The given password file has {} passwords that match the index policy",
+         num_valid_range_passwords,
+         num_valid_index_passwords
+    ));
+
+    let report = io::format_day_report(2, "Password Philosophy", "Count the passwords that match the policies", &results);
+    println!("{}", &report);
 }
 
 fn count_valid_passwords(
@@ -50,13 +54,6 @@ fn count_valid_passwords(
         }
     }
     Ok(valid_passwords)
-}
-
-fn load_input_from_file() -> std::io::Result<String> {
-    let cargo_path = env!("CARGO_MANIFEST_DIR");
-    let input_file_path = format!("{}/share/days_of_advent/day02/input", cargo_path);
-
-    std::fs::read_to_string(&input_file_path)
 }
 
 #[cfg(test)]
