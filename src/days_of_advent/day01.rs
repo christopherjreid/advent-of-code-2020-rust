@@ -1,39 +1,34 @@
+use crate::days_of_advent::common::io;
+
+
 /// Run the Day 01 puzzle, loading the input from a file, finding entries
 /// that sum to a given value, and printing the result of multiplying those
 /// entries
 pub fn run() -> () {
-    let puzzle_input = load_input_from_file();
+    let puzzle_input = io::load_input_from_file("day01");
     if puzzle_input.is_err() {
         panic!("Could not load entries from file");
     }
 
     let entries = convert_entries_to_i32(&puzzle_input.unwrap());
 
-    for num_addends in 2..=3 {
-        let result = repair_report(&entries, 2020, num_addends);
-        print_result(num_addends, &result);
-    }
+    const SUM : i32 = 2020;
+
+    let result_2 = repair_report(&entries, SUM, 2);
+    let result_3 = repair_report(&entries, SUM, 3);
+
+    let results = String::from(format!(
+        "Found two addends that make {}, and they multiply to {}\n\
+         Found three addends that make {}, and they multiply to {}",
+         SUM.to_string(), result_2.unwrap(), SUM.to_string(), result_3.unwrap()
+    ));
+
+    let report = io::format_day_report(1, "Repair Report", "Find entries that add to 2020, and multiply them", &results);
+    println!("{}", &report);
 }
 
 fn convert_entries_to_i32(entries: &str) -> Vec<i32> {
     return entries.trim().lines().map(|s| s.parse::<i32>().unwrap()).collect();
-}
-
-fn load_input_from_file() -> std::io::Result<String> {
-    let cargo_path = env!("CARGO_MANIFEST_DIR");
-    let input_file_path = format!("{}/share/days_of_advent/day01/input", cargo_path);
-
-    std::fs::read_to_string(&input_file_path)
-}
-
-fn print_result(num_addends: usize, result: &Result<i32, &str>) -> () {
-    if result.is_err() {
-        let panic_msg = format!("Could not repair report: No {} entries summed to 2020", num_addends);
-        panic!(panic_msg);
-    }
-
-    let success_msg = format!("\tThe result of the input for {} addends is {}", num_addends, result.unwrap());
-    println!("{}", success_msg);
 }
 
 fn repair_report(entries: &[i32], sum: i32, num_to_sum: usize) -> Result<i32, &str> {
