@@ -8,12 +8,15 @@ pub fn run() -> () {
     let puzzle_input = puzzle_input.unwrap();
 
     let groups = split_groups(&puzzle_input);
-    let total = groups.iter().map(|g| count_unique_letters(&g.to_string())).sum::<usize>();
+    let total_any = groups.iter().map(|g| count_unique_letters(&g.to_string())).sum::<usize>();
+    let total_all = groups.iter().map(|g| count_consistent_letters(&g.to_string())).sum::<usize>();
 
     let content = format!(
         "\
-        Total answers are {}",
-        total,
+        Total answers are {}\n\
+        Total consistent answers are {}",
+        total_any,
+        total_all
     );
 
     let report = io::format_day_report(
@@ -33,6 +36,17 @@ fn count_unique_letters(group_response: &str) -> usize {
     sorted.dedup();
 
     sorted.len()
+}
+
+fn count_consistent_letters(group_response: &str) -> usize {
+    let shortest_line = group_response.clone().lines().min_by(|l1, l2| l1.len().cmp(&l2.len())).unwrap();
+    let mut num_yes = 0;
+    for character in shortest_line.chars() {
+        num_yes += if group_response.lines().all(|l| l.contains(character)) {1} else {0};
+    }
+
+    num_yes
+
 }
 
 fn split_groups(all_groups: &str) -> Vec<String> {
