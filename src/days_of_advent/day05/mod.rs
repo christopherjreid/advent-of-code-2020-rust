@@ -7,12 +7,29 @@ pub fn run() -> () {
     }
     let puzzle_input = puzzle_input.unwrap();
 
-    let highest_seat_id = puzzle_input.lines().map(|l| seat_binary_to_id(&l)).max().unwrap();
+    let seat_ids = puzzle_input.lines().map(|l| seat_binary_to_id(&l)).collect::<Vec<u16>>();
+    let highest_seat_id = seat_ids.iter().max().unwrap();
 
+    let mut missing_seats: Vec<u16> = Vec::new();
+
+    for seat_id in 0..*highest_seat_id as u16 {
+        if seat_id != 0u16 && ! seat_ids.contains(&seat_id) {
+            missing_seats.push(seat_id);
+        }
+    }
+
+    let my_seat = missing_seats.iter().filter(|s| seat_ids.contains(&(*s - 1)) && seat_ids.contains(&(*s+1))).collect::<Vec<&u16>>();
+    for &seat in &my_seat {
+        println!("Seat {} is empty and has neighbors", seat);
+    }
+
+    let my_seat = my_seat[0];
     let content = format!(
         "\
-        Highest seat ID is {}",
+        Highest seat ID is {}\n\
+        My seat is {}",
         highest_seat_id,
+        my_seat
     );
 
     let report = io::format_day_report(
