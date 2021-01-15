@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::days_of_advent::common::io;
 
-mod bag_rules;
 mod bag_rule_map;
+mod bag_rules;
 
 pub fn run() {
     let puzzle_input = io::load_input_from_file("day07");
@@ -11,12 +11,17 @@ pub fn run() {
     let puzzle_input = puzzle_input.unwrap();
 
     let bag_rule_map_deserializer = bag_rule_map::BagRuleMapDeserializer::new();
-    let total = calc_num_bags_can_contain_bag(&puzzle_input, &bag_rule_map_deserializer, "shiny gold");
+    let total =
+        calc_num_bags_can_contain_bag(&puzzle_input, &bag_rule_map_deserializer, "shiny gold");
+
+    let total_bags_within =
+        calc_num_bags_inside_bag(&puzzle_input, &bag_rule_map_deserializer, "shiny gold");
 
     let content = format!(
         "\
-        Total number of options are {}",
-        total
+        Total number of options are {}\n\
+        Total number of contained bags are {}",
+        total, total_bags_within
     );
 
     let report = io::format_day_report(
@@ -50,6 +55,16 @@ pub fn calc_num_bags_can_contain_bag(
     return total;
 }
 
+pub fn calc_num_bags_inside_bag(
+    serialized_bag_rules: &str,
+    bag_rule_deserializer: &bag_rule_map::BagRuleMapDeserializer,
+    bag_type: &str,
+) -> usize {
+    let nodes: bag_rule_map::BagRuleMap = bag_rule_deserializer.deserialize(&serialized_bag_rules);
+
+    num_bags_within_bag(bag_type, 1, &nodes) - 1
+}
+
 pub fn dist_from_node(
     source_id: &str,
     target_id: &str,
@@ -81,6 +96,16 @@ pub fn dist_from_node(
     }
 }
 
+pub fn num_bags_within_bag(source_id: &str, num: usize, map: &bag_rule_map::BagRuleMap) -> usize {
+    let start_rule = map.get(source_id).unwrap();
+    let mut total = num;
+    for (num_child, id) in &start_rule.contents {
+        total += num * num_bags_within_bag(id, *num_child, &map);
+    }
+
+    return total;
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -101,12 +126,24 @@ mod tests {
 
         let bag_rule_map_deserializer = bag_rule_map::BagRuleMapDeserializer::new();
 
-        let total = calc_num_bags_can_contain_bag(
-            &input,
-            &bag_rule_map_deserializer,
-            "shiny gold",
-        );
+        let total = calc_num_bags_can_contain_bag(&input, &bag_rule_map_deserializer, "shiny gold");
         assert_eq!(total, 4);
     }
 
+    #[test]
+    fn acceptance_criteria_b() {
+        let input = "\
+        shiny gold bags contain 2 dark red bags.\n\
+        dark red bags contain 2 dark orange bags.\n\
+        dark orange bags contain 2 dark yellow bags.\n\
+        dark yellow bags contain 2 dark green bags.\n\
+        dark green bags contain 2 dark blue bags.\n\
+        dark blue bags contain 2 dark violet bags.\n\
+        dark violet bags contain no other bags.";
+
+        let bag_rule_map_deserializer = bag_rule_map::BagRuleMapDeserializer::new();
+
+        let total = calc_num_bags_inside_bag(&input, &bag_rule_map_deserializer, "shiny gold");
+        assert_eq!(total, 126);
+    }
 }
