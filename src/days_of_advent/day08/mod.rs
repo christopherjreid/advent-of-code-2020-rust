@@ -10,25 +10,40 @@ pub fn run() {
     let boot_code_deserializer = BootCodeDeserializer::new();
 
     let program = boot_code_deserializer.deserialize(&puzzle_input);
+    let mut computer = Computer {accumulated_value: 0};
 
-    let mut visited_indices = vec![];
-    let mut idx = 0;
-    let mut accumulated_value = 0;
+    computer.run_program(&program);
+    let accumulated_part_1 = computer.accumulated_value;
 
-    while ! visited_indices.contains(&idx) {
-        visited_indices.push(idx);
-        match program[idx].0 {
-            InstructionCode::NoOperation => idx += 1,
-            InstructionCode::Jump => idx = (idx as i32 + program[idx].1) as usize,
-            InstructionCode::Accumulate => {accumulated_value += program[idx].1; idx += 1}
+    let mut accumulated_part_2 = 0;
+
+    for idx in 0..program.len() {
+        let mut mut_program = program.clone();
+        let original_instruction = program[idx].clone();
+
+        let altered_instruction = match original_instruction.0 {
+            InstructionCode::Jump => (InstructionCode::NoOperation, original_instruction.1),
+            InstructionCode::NoOperation => (InstructionCode::Jump, original_instruction.1),
+            _ => original_instruction
+        };
+        mut_program[idx] = altered_instruction;
+        let mut computer = Computer {accumulated_value: 0};
+        println!("{:?}", program);
+        let termination = computer.run_program(&mut_program);
+        println!("End program");
+        match termination {
+            TerminationMode::InfiniteLoop => (),
+            TerminationMode::Halt => {accumulated_part_2 = computer.accumulated_value; break;}
         }
 
     }
 
     let content = format!(
         "\
-        Accumulated value is {}",
-        accumulated_value
+        Accumulated value is {}\n\
+        Accumulated value for part 2 is {}\n",
+        accumulated_part_1,
+        accumulated_part_2
     );
 
     let report = io::format_day_report(
@@ -41,6 +56,40 @@ pub fn run() {
     println!("{}", report);
 }
 
+struct Computer {
+    pub accumulated_value: i32
+}
+
+enum TerminationMode {
+    InfiniteLoop,
+    Halt
+}
+
+impl Computer {
+    fn run_program(&mut self, program: &[(InstructionCode, i32)]) -> TerminationMode {
+
+        let mut visited_indices = vec![];
+        let mut idx = 0;
+        self.accumulated_value = 0;
+
+        while ! visited_indices.contains(&idx) {
+            if idx >= program.len() {
+                return TerminationMode::Halt;
+            }
+            visited_indices.push(idx);
+            let orig_idx = idx.clone();
+            match program[idx].0 {
+                InstructionCode::NoOperation => idx += 1,
+                InstructionCode::Jump => idx = (idx as i32 + program[idx].1) as usize,
+                InstructionCode::Accumulate => {self.accumulated_value += program[idx].1; idx += 1}
+            }
+        }
+
+        return TerminationMode::InfiniteLoop;
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum InstructionCode {
     NoOperation,
     Accumulate,
@@ -103,5 +152,50 @@ mod tests {
         let deserializer = BootCodeDeserializer::new();
 
         let result = deserializer.deserialize(&input);
+    }
+
+    #[test]
+    fn acceptance_criteria_2() {
+
+        let input = "\
+        nop +0\n\
+        acc +1\n\
+        jmp +4\n\
+        acc +3\n\
+        jmp -3\n\
+        acc -99\n\
+        acc +1\n\
+        jmp -4\n\
+        acc +6\
+        ";
+
+        let boot_code_deserializer = BootCodeDeserializer::new();
+
+        let program = boot_code_deserializer.deserialize(&input);
+
+        let mut result = 0;
+
+        for idx in 0..program.len() {
+            let mut mut_program = program.clone();
+            let original_instruction = program[idx].clone();
+
+            let altered_instruction = match original_instruction.0 {
+                InstructionCode::Jump => (InstructionCode::NoOperation, original_instruction.1),
+                InstructionCode::NoOperation => (InstructionCode::Jump, original_instruction.1),
+                _ => original_instruction
+            };
+            mut_program[idx] = altered_instruction;
+            let mut computer = Computer {accumulated_value: 0};
+            println!("{:?}", program);
+            let termination = computer.run_program(&mut_program);
+            println!("End program");
+            match termination {
+                TerminationMode::InfiniteLoop => (),
+                TerminationMode::Halt => {result = computer.accumulated_value; break;}
+            }
+
+        }
+
+        assert_eq!(8, result);
     }
 }
